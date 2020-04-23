@@ -10,6 +10,7 @@ class GroupedListView<T, E> extends StatefulWidget {
   final Widget Function(BuildContext context, T element) itemBuilder;
   final Widget Function(BuildContext context, T element, int index)
       indexedItemBuilder;
+  final int Function(T a, T b) itemSorter;
   final GroupedListOrder order;
   final bool sort;
   final bool useStickyGroupSeparators;
@@ -48,6 +49,7 @@ class GroupedListView<T, E> extends StatefulWidget {
     this.addRepaintBoundaries = true,
     this.addSemanticIndexes = true,
     this.cacheExtent,
+    this.itemSorter
   }) : super(key: key);
 
   @override
@@ -171,18 +173,21 @@ class _GroupedLisdtViewState<T, E> extends State<GroupedListView<T, E>> {
           compareResult =
               ('${widget.groupBy(e1)}').compareTo('${widget.groupBy(e2)}');
         }
+
         if (compareResult == 0) {
-          if (e1 is Comparable) {
+          if (widget.itemSorter != null) {
+            compareResult = widget.itemSorter(e1, e2);
+          } else if (e1 is Comparable) {
             compareResult = (e1).compareTo(e2);
           } else {
             compareResult = ('$e1').compareTo('$e2');
           }
+        } else if (widget.order == GroupedListOrder.DESC) {
+          compareResult *= -1;
         }
+
         return compareResult;
       });
-      if (widget.order == GroupedListOrder.DESC) {
-        elements = elements.reversed.toList();
-      }
     }
     return elements;
   }
